@@ -92,8 +92,8 @@ def get_train_test_list(inL, centerVer, centerHor):
                 cropNsave = False
 
         if cropNsave:
-            top = int(centerVer-inL/2)
-            left = int(centerHor-inL/2)
+            top = int(centerVer-inL/2) # 476 - 476/2
+            left = int(centerHor-inL/2) # 476 - 476/2
 
             for i in tqdm(inList+testList):
                 image_tiff = io.imread(i)

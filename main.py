@@ -148,9 +148,9 @@ def get_parser():
                                                  'Using Deep-Neural-Network')
     parser.add_argument('-il', '--inL', default=476, type=int, help='UNETs input image size [px]')
     parser.add_argument('-mr', '--maskR', default=95, type=int, help='Mask radius [px]')
-    parser.add_argument('-cv', '--centerVer', default=476, type=int,
+    parser.add_argument('-cv', '--centerVer', default=340, type=int,
                         help='vertical position of the center of the atom cloud [px]')
-    parser.add_argument('-ch', '--centerHor', default=804, type=int,
+    parser.add_argument('-ch', '--centerHor', default=330, type=int,
                         help='horizontal position of the center of the atom cloud [px]')
     parser.add_argument('-b', '--batch_size', default=8, type=int)
     parser.add_argument('-lr', '--learning_rate', default=5e-6, type=float)

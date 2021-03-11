@@ -49,6 +49,7 @@ def unet_model(inL, outL):
 
     inp = Input(shape=(inL,inL))
     inp1 = Reshape(target_shape=(inS,inS,1))(inp)
+    #inp1 = Reshape(target_shape=(inL,inL,1))(inp)
 
     conv1 = Conv2D(d1, (3, 3),
                    padding='valid', kernel_initializer='glorot_normal')(inp1)
@@ -157,5 +158,5 @@ def unet_model(inL, outL):
 
 if __name__=='__main__':
     # test unet
-    model = unet_model(476, 192)
+    model = unet_model(476, 190)
     model.summary()

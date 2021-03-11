@@ -22,6 +22,8 @@ def npGenerator(dirs, ord, inL, outL,mask):
     for i in range(len(ord)):
         image_tiff = np.array(io.imread(dirs[ord[i]]))
         OD_image = np.array(image_tiff, dtype=np.dtype('float32')) / 4294967295
+        # print('OD ', OD_image.shape, inL, outL)
+        # print('Check ',int(inL / 2 - outL / 2),int(inL / 2 + outL / 2))
         Y[i, :, :] = OD_image[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
                      int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]
         x_temp = OD_image * mask
