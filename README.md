@@ -5,6 +5,9 @@
 - 探索模型的学习能力(不同的样本量、不同的模型)
 - 跨越reference image 和 atom image的gap
 - 更精确的量化指标（SSIM）
+- 把tif图像转换成png，相应图像处理代码修改
+
+以一篇论文的格式进行规划，
 
 
 ## Original project
