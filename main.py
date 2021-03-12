@@ -111,10 +111,10 @@ def train_model(args, outL, mask, model, trainList, valList, epochNum, reference
 
         plot_runtime_error(epochNum, trainLoss, valLoss, referenceMSE)
 
-        modelFile = 'models/epoch_' + str(epochNum).zfill(4) + '.h5'
+        modelFile = 'models/unet_epoch_' + str(epochNum).zfill(4) + '.h5'
         model.save(modelFile, include_optimizer=False)
         if args.dont_save_models and (epochNum > 1):
-            os.remove('models/epoch_' + str(epochNum - 1).zfill(4) + '.h5') 
+            os.remove('models/unet_epoch_' + str(epochNum - 1).zfill(4) + '.h5')
 
         np.save('training_loss_history.npy', trainLoss)
         np.save('validation_history.npy', valLoss)
@@ -174,7 +174,7 @@ if __name__=='__main__':
     mask = generate_mask(args.inL, args.maskR)
 
     ## get data
-    trainList, valList, testList = prepare_datasets(args, 0.2)
+    trainList, valList, testList = prepare_datasets(args.inL, args.centerVer, args.centerHor, 0.2)
 
 
     ## build model
@@ -213,7 +213,7 @@ if __name__=='__main__':
         save_tif('X.tif', X)
         save_tif('pred.tif', pred)
         save_tif('Y', Y)
-    plot_single_comparison(X, pred, Y, pred)
+    #plot_single_comparison(X, pred, Y, pred)
 
     # on test image
     if referance_loss:
@@ -225,7 +225,7 @@ if __name__=='__main__':
                              dtype=np.dtype('float32')) / 4294967295
         ref_image = ref_image[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
                     int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]
-        plot_single_comparison(X, pred, Y, ref_image)
+        #plot_single_comparison(X, pred, Y, ref_image)
 
 # TODO: move next two sections to a seperate file (with 1. load model 2. load images 3. store predictions), and keep in main
 

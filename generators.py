@@ -45,7 +45,7 @@ def initialize_model(model):
     if not os.path.isdir('models'):
         os.mkdir ('models')
     
-    modelsList = [os.path.join('./models/', each) for each in os.listdir('./models/') if each.endswith('.h5')]  # we list the model files
+    modelsList = [os.path.join('./models/', each) for each in os.listdir('./models/') if 'unet' in each]  # we list the model files
     if not len(modelsList):
         print('strarting from scratch')
         epochNum = 1
@@ -61,6 +61,73 @@ def initialize_model(model):
 
     return model, epochNum, trainLoss, valLoss
 
+# def generate_referance_loss(inL, outL, trainList, valList):
+#     '''
+#     Generates the reference loss for the experiment
+#     :param inL: int, UNETs input image size [px]
+#     :param outL: int, UNETs output size [px]
+#     :param trainList: list, containing image paths for the training set
+#     :param valList: list, containing image paths for the validation set
+#     :return: np.array, containing the reference MSE for the experiment
+#     '''
+#
+#     if os.path.exists(os.getcwd() + '/referenceMSEtrainA.npy'):
+#         trainAloss = np.load('referenceMSEtrainA.npy')
+#         trainRloss = np.load('referenceMSEtrainR.npy')
+#         valAloss = np.load('referenceMSEvalA.npy')
+#         valRloss = np.load('referenceMSEvalR.npy')
+#
+#     else:
+#         trainA = [s for s in trainList if "A_no_atoms" in s]
+#         trainAloss = np.empty(len(trainA))
+#         for i in tqdm(range(len(trainA))):
+#             refDir = trainA[i].replace("A_no_atoms", "R_no_atoms")
+#             Y = np.array(np.array(io.imread(trainA[i])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+#                                   int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
+#             ref = np.array(np.array(io.imread(refDir)[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+#                                     int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
+#             trainAloss[i] = np.average((ref - Y) ** 2)
+#         np.save('referenceMSEtrainA.npy', trainAloss)
+#
+#
+#         trainR = [s for s in trainList if "R_no_atoms" in s]
+#         trainRloss = np.empty(len(trainR))
+#         for i in tqdm(range(len(trainR))):
+#             refDir = trainR[i].replace("R_no_atoms", "A_no_atoms")
+#             Y = np.array(np.array(io.imread(trainR[i])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+#                                   int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
+#             ref = np.array(np.array(io.imread(refDir)[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+#                                     int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
+#             trainRloss[i] = np.average((ref - Y) ** 2)
+#         np.save('referenceMSEtrainR.npy', trainRloss)
+#
+#         valA = [s for s in valList if "A_no_atoms" in s]
+#         valAloss = np.empty(len(valA))
+#         for i in tqdm(range(len(valA))):
+#             refDir = valA[i].replace("A_no_atoms", "R_no_atoms")
+#             Y = np.array(np.array(io.imread(valA[i])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+#                                   int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
+#             ref = np.array(np.array(io.imread(refDir)[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+#                                     int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
+#             valAloss[i] = np.average((ref - Y) ** 2)
+#         np.save('referenceMSEvalA.npy', valAloss)
+#
+#         valR = [s for s in valList if "R_no_atoms" in s]
+#         valRloss = np.empty(len(valR))
+#         for i in tqdm(range(len(valR))):
+#             refDir = valR[i].replace("R_no_atoms", "A_no_atoms")
+#             Y = np.array(np.array(io.imread(valR[i])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+#                                   int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
+#             ref = np.array(np.array(io.imread(refDir)[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+#                                     int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
+#             valRloss[i] = np.average((ref - Y) ** 2)
+#         np.save('referenceMSEvalR.npy', valRloss)
+#
+#     referenceMSE = np.mean(np.concatenate((trainAloss, trainRloss, valAloss, valRloss)))
+#     print('reference MSE is ' + str(referenceMSE))
+#
+#     return referenceMSE
+
 def generate_referance_loss(inL, outL, trainList, valList):
     '''
     Generates the reference loss for the experiment
@@ -70,64 +137,15 @@ def generate_referance_loss(inL, outL, trainList, valList):
     :param valList: list, containing image paths for the validation set
     :return: np.array, containing the reference MSE for the experiment
     '''
-    
-    if os.path.exists(os.getcwd() + '/referenceMSEtrainA.npy'):
-        trainAloss = np.load('referenceMSEtrainA.npy')
-        trainRloss = np.load('referenceMSEtrainR.npy')
-        valAloss = np.load('referenceMSEvalA.npy')
-        valRloss = np.load('referenceMSEvalR.npy')
-
-    else:
-        trainA = [s for s in trainList if "A_no_atoms" in s]
-        trainAloss = np.empty(len(trainA))
-        for i in tqdm(range(len(trainA))):
-            refDir = trainA[i].replace("A_no_atoms", "R_no_atoms")
-            Y = np.array(np.array(io.imread(trainA[i])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                                  int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
-            ref = np.array(np.array(io.imread(refDir)[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                                    int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
-            trainAloss[i] = np.average((ref - Y) ** 2)
-        np.save('referenceMSEtrainA.npy', trainAloss)
-
-
-        trainR = [s for s in trainList if "R_no_atoms" in s]
-        trainRloss = np.empty(len(trainR))
-        for i in tqdm(range(len(trainR))):
-            refDir = trainR[i].replace("R_no_atoms", "A_no_atoms")
-            Y = np.array(np.array(io.imread(trainR[i])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                                  int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
-            ref = np.array(np.array(io.imread(refDir)[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                                    int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
-            trainRloss[i] = np.average((ref - Y) ** 2)
-        np.save('referenceMSEtrainR.npy', trainRloss)
-
-        valA = [s for s in valList if "A_no_atoms" in s]
-        valAloss = np.empty(len(valA))
-        for i in tqdm(range(len(valA))):
-            refDir = valA[i].replace("A_no_atoms", "R_no_atoms")
-            Y = np.array(np.array(io.imread(valA[i])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                                  int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
-            ref = np.array(np.array(io.imread(refDir)[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                                    int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
-            valAloss[i] = np.average((ref - Y) ** 2)
-        np.save('referenceMSEvalA.npy', valAloss)
-
-        valR = [s for s in valList if "R_no_atoms" in s]
-        valRloss = np.empty(len(valR))
-        for i in tqdm(range(len(valR))):
-            refDir = valR[i].replace("R_no_atoms", "A_no_atoms")
-            Y = np.array(np.array(io.imread(valR[i])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                                  int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
-            ref = np.array(np.array(io.imread(refDir)[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                                    int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]), dtype=np.dtype('float32')) / 4294967295
-            valRloss[i] = np.average((ref - Y) ** 2)
-        np.save('referenceMSEvalR.npy', valRloss)
-
-    referenceMSE = np.mean(np.concatenate((trainAloss, trainRloss, valAloss, valRloss)))
-    print('reference MSE is ' + str(referenceMSE))
-
+    #refDir = trainA[i].replace("A_no_atoms", "R_no_atoms")
+    Y = np.array(np.array(io.imread(trainList[0])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+                        int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]),
+                        dtype=np.dtype('float32')) / 4294967295
+    ref = np.array(np.array(io.imread(valList[0])[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+                            int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]),
+                            dtype=np.dtype('float32')) / 4294967295
+    referenceMSE = np.average((ref - Y) ** 2)
     return referenceMSE
-
 
 if __name__=='__main__':
     from unet import unet_model

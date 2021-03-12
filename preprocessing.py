@@ -79,9 +79,9 @@ def get_train_test_list(inL, centerVer, centerHor):
     '''
     
     print('Extracting images WITHOUT atoms (for training and validation)')
-    inList = extract_imags_from_ds('./woAtoms_ds.txt')
+    inList = extract_imags_from_ds('./data/woAtoms_ds.txt')
     print('Extracting images WITH atoms (for testing)')
-    testList = extract_imags_from_ds('./wAtoms_ds.txt')
+    testList = extract_imags_from_ds('./data/wAtoms_ds.txt')
 
     image_tiff = io.imread(inList[0])
     if image_tiff.shape[0] > inL:
@@ -122,19 +122,19 @@ def save_lists(trainList, valList, testList):
     
     print('number of samples without Atoms= ' + str(len(trainList)+len(valList)))
     print('number of samples with Atoms= ' + str(len(testList)))
-    with open("training.lst", "w") as f:
+    with open("./params/training.lst", "w") as f:
         for s in trainList:
             f.write(str(s) + "\n")
-    with open("validation.lst", "w") as f:
+    with open("./params/validation.lst", "w") as f:
         for s in valList:
             f.write(str(s) + "\n")
-    with open("testWatoms.lst", "w") as f:
+    with open("./params/testWatoms.lst", "w") as f:
         for s in testList:
             f.write(str(s) + "\n")
 
     return
 
-def prepare_datasets(args, val_ratio):
+def prepare_datasets(inL, centerVer, centerHor, val_ratio):
     '''
     Prepares the datasets for training the UNET architecture. If there are saved datasets they will be used,
     if not they will be generated from the txtfiles containing the dir paths
@@ -146,21 +146,22 @@ def prepare_datasets(args, val_ratio):
     testList: list, containing image paths for the test set
     '''
     
-    if os.path.exists('./training.lst') and os.path.exists('./validation.lst') and os.path.exists('./testWatoms.lst'):
+    if os.path.exists('./params/training.lst') and os.path.exists('./params/validation.lst') and os.path.exists('./params/testWatoms.lst'):
         # 1st priority
         print('Taking data from pre-saved lists')
-        trainList = [line.strip() for line in open("training.lst", 'r')]
-        valList = [line.strip() for line in open("validation.lst", 'r')]
-        testList = [line.strip() for line in open("testWatoms.lst", 'r')]
+        trainList = [line.strip() for line in open("./params/training.lst", 'r')]
+        valList = [line.strip() for line in open("./params/validation.lst", 'r')]
+        testList = [line.strip() for line in open("./params/testWatoms.lst", 'r')]
         print('Training set containing %d samples and validation set containing %d samples.' %
               (len(trainList),len(valList)))
         print('Test set containing %d samples.' % (len(testList)))
         return trainList, valList, testList
 
-    elif os.path.exists('./woAtoms_ds.txt') and os.path.exists('./wAtoms_ds.txt'):
+    elif os.path.exists('./data/woAtoms_ds.txt') and os.path.exists('./data/wAtoms_ds.txt'):
         # 2nd priority
         print('Taking data from dataset text files')
-        inList, testList = get_train_test_list(args.inL, args.centerVer, args.centerHor)
+        #inList, testList = get_train_test_list(args.inL, args.centerVer, args.centerHor)
+        inList, testList = get_train_test_list(inL, centerVer, centerHor)
         print('\nCreating training and validation sets, ratio = ' + str(val_ratio))
         trainList, valList = train_test_split(inList, test_size=int(len(inList)*val_ratio))
         print('\nSaving lists')
@@ -181,4 +182,4 @@ def prepare_datasets(args, val_ratio):
 if __name__=='__main__':
     # test options
     # read_dirs_from_txt_files('wAtoms_ds.txt')
-    prepare_datasets(476, 442, 804, 0.2)  # why these numbers are hardcoded here??
+    prepare_datasets(476, 442, 350, 0.2)  # why these numbers are hardcoded here??

@@ -596,7 +596,7 @@ def u2net_2d_base(input_tensor,
 
 
 def u2net_2d(input_size, n_labels, filter_num_down, filter_num_up='auto', filter_mid_num_down='auto', filter_mid_num_up='auto', 
-             filter_4f_num='auto', filter_4f_mid_num='auto', activation='ReLU', output_activation='Sigmoid', 
+             filter_4f_num='auto', filter_4f_mid_num='auto', activation='ReLU', output_activation=None,
              batch_norm=False, pool=True, unpool=True, deep_supervision=False, name='u2net'):
     
     '''
@@ -697,11 +697,11 @@ def u2net_2d(input_size, n_labels, filter_num_down, filter_num_up='auto', filter
     #depth_backup = []
     #depth_ = len(filter_num_down)
     
-    IN = Input(shape=input_size) 
-    #inp1 = Reshape(target_shape=input_size)(IN)
+    IN = Input(shape=(256, 256))
+    inp1 = Reshape(target_shape=input_size)(IN)
     #crop1 = Cropping2D(cropping=(256,256), data_format="channels_last")(inp1)
     # base (before conv + activation + upsample)
-    X_out = u2net_2d_base(IN, 
+    X_out = u2net_2d_base(inp1,
                           filter_num_down, filter_num_up, 
                           filter_mid_num_down, filter_mid_num_up, 
                           filter_4f_num, filter_4f_mid_num, activation=activation, 

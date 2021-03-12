@@ -13,10 +13,12 @@ import argparse
 from tqdm import tqdm
 
 #from plotter import plot_runtime_error, plot_single_comparison
-from generators import *
+from generators_u2 import *
 from preprocessing import prepare_datasets, replaceLast
 from unet import unet_model
 from u2net import u2net_2d
+
+import tensorflow as tf
 
 K.set_image_data_format('channels_last')
 
@@ -35,8 +37,9 @@ def infer_single_img(inL, outL, mask, model, img_path):
     '''
     
     OD_image = np.array(np.array(io.imread(img_path)), dtype=np.dtype('float32')) / 4294967295
-    Y = OD_image[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-        int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]
+    # Y = OD_image[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
+    #     int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]
+    Y = OD_image
     x_masked = OD_image * mask
     X = x_masked + (1 - mask) * 0.5
     Y_prime = model.predict(X[np.newaxis, :, :])
@@ -117,12 +120,12 @@ def train_model(args, outL, mask, model, trainList, valList, epochNum, reference
         trainLoss = np.append(trainLoss, curTrainLoss)
         valLoss = np.append(valLoss, curValLoss)
 
-        plot_runtime_error(epochNum, trainLoss, valLoss, referenceMSE)
+        #plot_runtime_error(epochNum, trainLoss, valLoss, referenceMSE)
 
-        modelFile = 'models/u2_epoch_' + str(epochNum).zfill(4) + '.h5'
+        modelFile = 'models/u2net_epoch_' + str(epochNum).zfill(4) + '.h5'
         model.save(modelFile, include_optimizer=False)
         if args.dont_save_models and (epochNum > 1):
-            os.remove('models/u2_epoch_' + str(epochNum - 1).zfill(4) + '.h5') 
+            os.remove('models/u2net_epoch_' + str(epochNum - 1).zfill(4) + '.h5')
 
         np.save('training_loss_history.npy', trainLoss)
         np.save('validation_history.npy', valLoss)
@@ -164,7 +167,7 @@ def get_parser():
     parser.add_argument('-lr', '--learning_rate', default=5e-6, type=float)
     parser.add_argument('-sgd', '--SGD', default=False, action='store_true')
     parser.add_argument('-e', '--max_epochs', default=1000, type=int)
-    parser.add_argument('-dsm', '--dont_save_models', action='store_true', default=False,
+    parser.add_argument('-dsm', '--dont_save_models', action='store_true', default=True,
                         help='save all models to files')
     parser.add_argument('-src', '--skip_reference_comparison', action='store_true', default=False,
                         help='avoid comprison to reference (double-shot absorption imaging).'
@@ -173,16 +176,23 @@ def get_parser():
 
     return parser
 
+
 if __name__=='__main__':
     ## params
     parser = get_parser()
     args = parser.parse_args()
 
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    tf.config.experimental.set_memory_growth(gpus[0], True)
+
+    if not os.path.exists('./result/'):
+        os.makedirs('./result/')
+
     outL = 2 * args.maskR  # Output size
     mask = generate_mask(args.inL, args.maskR)
 
     ## get data
-    trainList, valList, testList = prepare_datasets(args, 0.2)
+    trainList, valList, testList = prepare_datasets(args.inL, args.centerVer, args.centerHor, 0.2)
 
     ## build model
     K.clear_session()
@@ -221,6 +231,7 @@ if __name__=='__main__':
         save_tif('X.tif', X)
         save_tif('pred.tif', pred)
         save_tif('Y', Y)
+    save_tif('./result/pred.tif', pred)
     #plot_single_comparison(X, pred, Y, pred)
 
     # on test image
@@ -231,9 +242,9 @@ if __name__=='__main__':
         X, pred, Y = infer_single_img(args.inL, outL, mask, model, image_name)
         ref_image = np.array(np.array(io.imread(image_name.replace('A_with_atoms', 'R_with_atoms'))),
                              dtype=np.dtype('float32')) / 4294967295
-        ref_image = ref_image[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
-                    int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]
+        ref_image = ref_image
         #plot_single_comparison(X, pred, Y, ref_image)
+        save_tif('./result/test.tif', pred)
 
 # TODO: move next two sections to a seperate file (with 1. load model 2. load images 3. store predictions), and keep in main
 
