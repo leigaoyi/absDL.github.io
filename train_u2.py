@@ -13,10 +13,10 @@ import argparse
 from tqdm import tqdm
 
 #from plotter import plot_runtime_error, plot_single_comparison
-from generators_u2 import *
-from preprocessing import prepare_datasets, replaceLast
+from utils.generators_u2 import *
+from utils.preprocessing import prepare_datasets, replaceLast
 from unet import unet_model
-from u2net import u2net_2d
+from model_code.u2net import u2net_2d
 
 import tensorflow as tf
 

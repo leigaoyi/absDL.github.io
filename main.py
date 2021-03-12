@@ -5,10 +5,10 @@ from keras.optimizers import Adam, SGD
 import argparse
 from tqdm import tqdm
 
-from plotter import plot_runtime_error, plot_single_comparison
-from generators import *
+from utils.plotter import plot_runtime_error
+from utils.generators import *
 from preprocessing import prepare_datasets, replaceLast
-from unet import unet_model
+from model_code.unet import unet_model
 
 K.set_image_data_format('channels_last')
 
