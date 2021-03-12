@@ -1,5 +1,13 @@
 # absDL
 
+## What I'm doing
+
+- 探索模型的学习能力(不同的样本量、不同的模型)
+- 跨越reference image 和 atom image的gap
+- 更精确的量化指标（SSIM）
+
+
+## Original project
 In this repository we arranged the required elements for training a deep network to deploy single-shot 
 absorption imaging in your lab.
 
