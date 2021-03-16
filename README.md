@@ -3,11 +3,13 @@
 ## What I'm doing
 
 - 探索模型的学习能力(不同的样本量、不同的模型)
-- 跨越reference image 和 atom image的gap
+- 跨越reference image 和 atom image的gap (x)
 - 更精确的量化指标（SSIM）
-- 把tif图像转换成png，相应图像处理代码修改
+- 把tif图像转换成png，相应图像处理代码修改 (y)
 
 以一篇论文的格式进行规划，
+
+原子图像补充，与图像修复任务同源。使用图像修复的技巧，来强化原子图像的去噪
 
 
 ## Original project
