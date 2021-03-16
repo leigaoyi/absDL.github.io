@@ -20,19 +20,21 @@ def infer_and_save_single_tif(img_path, model_path, output_img_path):
 
     outL = 2 * args.maskR  # Output size
     mask = generate_mask(args.inL, args.maskR)
-    model = u2net_2d((args.inL,args.inL,1),1,[64, 128])
+    model = u2net_2d((args.inL,args.inL,1),1,[64, 128, 256, 512])
 
     model.load_weights(model_path)
     _, y_prime, _ = infer_single_img(args.inL, outL, mask, model, img_path)
-    save_tif(output_img_path, y_prime)
+    save_png(output_img_path, y_prime)
+    #save_tif(output_img_path, y_prime)
 
     return
 
-
 if __name__ == '__main__':
-    modelFile = './models/u2net_epoch_0101.h5'
-    img_path = './data/train_cropped256px/000002.tif'
-    output_img_path = './result/epoch0101_2.tif'
+
+    model_number = '0740'
+    modelFile = './models/u2net_epoch_{}.h5'.format(model_number)
+    img_path = './data/small_train_cropped256px/000002.png'
+    output_img_path = './result/L2loss_epoch{0}_2.png'.format(model_number)
 
     infer_and_save_single_tif(img_path, modelFile, output_img_path)
 

@@ -15,9 +15,9 @@ from tqdm import tqdm
 #from plotter import plot_runtime_error, plot_single_comparison
 from utils.generators_u2 import *
 from utils.preprocessing import prepare_datasets, replaceLast
-from unet import unet_model
+#from unet import unet_model
 from model_code.u2net import u2net_2d
-
+from model_code.unet_v1 import unet_v1
 import tensorflow as tf
 
 K.set_image_data_format('channels_last')
@@ -36,7 +36,7 @@ def infer_single_img(inL, outL, mask, model, img_path):
     Y: np.array, the target image (or the unmasked input image)
     '''
     
-    OD_image = np.array(np.array(io.imread(img_path)), dtype=np.dtype('float32')) / 4294967295
+    OD_image = np.array(np.array(io.imread(img_path)), dtype=np.dtype('float32')) / 255.
     # Y = OD_image[int(inL / 2 - outL / 2):int(inL / 2 + outL / 2),
     #     int(inL / 2 - outL / 2):int(inL / 2 + outL / 2)]
     Y = OD_image
@@ -61,6 +61,13 @@ def save_tif(tif_path, tif_data):
     
     return
 
+def save_png(tif_path, tif_data):
+    tif_max = tif_data.max()
+    tif_min = tif_data.min()
+    tif_data = (tif_data - tif_min)/(tif_max-tif_min)
+    T = np.array(tif_data*255, dtype=np.dtype('uint8'))
+    imageio.imwrite(tif_path, T)
+    return 0
 
 def save_bin(bin_path, bin_data):
     '''
@@ -122,13 +129,14 @@ def train_model(args, outL, mask, model, trainList, valList, epochNum, reference
 
         #plot_runtime_error(epochNum, trainLoss, valLoss, referenceMSE)
 
-        modelFile = 'models/u2net_epoch_' + str(epochNum).zfill(4) + '.h5'
-        model.save(modelFile, include_optimizer=False)
+        modelFile = './models/{0}_epoch_'.format(args.model_name) + str(epochNum).zfill(4) + '.h5'
+        if (epochNum)%10 == 0:
+            model.save(modelFile, include_optimizer=False)
         if args.dont_save_models and (epochNum > 1):
-            os.remove('models/u2net_epoch_' + str(epochNum - 1).zfill(4) + '.h5')
+            os.remove('./models/u2net_epoch_' + str(epochNum - 1).zfill(4) + '.h5')
 
-        np.save('training_loss_history.npy', trainLoss)
-        np.save('validation_history.npy', valLoss)
+        np.save('./params/training_loss_history.npy', trainLoss)
+        np.save('./params/validation_history.npy', valLoss)
         gc.collect()
 
         epochNum = epochNum + 1
@@ -166,9 +174,11 @@ def get_parser():
     parser.add_argument('-b', '--batch_size', default=8, type=int)
     parser.add_argument('-lr', '--learning_rate', default=5e-6, type=float)
     parser.add_argument('-sgd', '--SGD', default=False, action='store_true')
-    parser.add_argument('-e', '--max_epochs', default=1000, type=int)
-    parser.add_argument('-dsm', '--dont_save_models', action='store_true', default=True,
+    parser.add_argument('-e', '--max_epochs', default=2000, type=int)
+    parser.add_argument('-dsm', '--dont_save_models', action='store_true', default=False,
                         help='save all models to files')
+    parser.add_argument('--model_name', default='unet_v1', type=str, help='Select which model to train')
+
     parser.add_argument('-src', '--skip_reference_comparison', action='store_true', default=False,
                         help='avoid comprison to reference (double-shot absorption imaging).'
                              'use this flag if you don\'t have the same dataset structure as the original: '
@@ -188,6 +198,9 @@ if __name__=='__main__':
     if not os.path.exists('./result/'):
         os.makedirs('./result/')
 
+    if not os.path.exists('./params/'):
+        os.makedirs('./params')
+
     outL = 2 * args.maskR  # Output size
     mask = generate_mask(args.inL, args.maskR)
 
@@ -197,16 +210,29 @@ if __name__=='__main__':
     ## build model
     K.clear_session()
     #model = unet_model(args.inL, outL)
-    model = u2net_2d((args.inL,args.inL,1),1,[64, 128])
+    if args.model_name == 'u2net':
+        model = u2net_2d((args.inL,args.inL,1),1,[64, 128, 256, 512])
+    if args.model_name == 'unet_v1':
+        model = unet_v1(input_shape=(256,256,1), activation=None)
+
     model.summary()  # display model summary
-    model, epochNum, trainLoss, valLoss = initialize_model(model)
+    model, epochNum, trainLoss, valLoss = initialize_model(model, '')
     if args.SGD:
         opt = SGD(lr=1e-2, momentum=0.9, decay=1e-4/args.max_epochs)
     else:
         opt = Adam(lr=args.learning_rate)
-    model.compile(optimizer=opt, loss='mse')
-    model.compile(optimizer=opt, loss='mse')
+    #model.compile(optimizer=opt, loss='mse')
 
+    def weight_circle(y_true, y_pred):
+        mask = generate_mask(256, 95)
+        mask = tf.constant(mask) # 大于半径的设置为1
+        mask = tf.cast(mask, dtype=tf.float32)
+        loss = 0.1*tf.multiply(K.square(y_true - y_pred), mask)+0.9*tf.multiply(K.square(y_true - y_pred), tf.ones_like(mask)-mask)
+        loss = tf.reduce_mean(loss) # L2 loss function
+        return loss
+        
+    #model.compile(optimizer=opt, loss='mse')
+    model.compile(optimizer=opt, loss=weight_circle)
 
     ## calculate referance loss
     if not args.skip_reference_comparison:
@@ -227,11 +253,11 @@ if __name__=='__main__':
     print(image_name)  # use eiter these three lines or set image_name= ""...
     X, pred, Y = infer_single_img(args.inL, outL, mask, model, image_name)
     # toggle to 'True' to save tifs
-    if False:
-        save_tif('X.tif', X)
-        save_tif('pred.tif', pred)
-        save_tif('Y', Y)
-    save_tif('./result/pred.tif', pred)
+    # if False:
+    #     save_png('X.tif', X)
+    #     save_png('pred.tif', pred)
+    #     save_png('Y', Y)
+    save_png('./result/pred.png', pred)
     #plot_single_comparison(X, pred, Y, pred)
 
     # on test image
@@ -241,10 +267,10 @@ if __name__=='__main__':
         print(image_name)  # use eiter these three lines or set image_name= ""...
         X, pred, Y = infer_single_img(args.inL, outL, mask, model, image_name)
         ref_image = np.array(np.array(io.imread(image_name.replace('A_with_atoms', 'R_with_atoms'))),
-                             dtype=np.dtype('float32')) / 4294967295
+                             dtype=np.dtype('float32')) / 255
         ref_image = ref_image
         #plot_single_comparison(X, pred, Y, ref_image)
-        save_tif('./result/test.tif', pred)
+        save_png('./result/test.png', pred)
 
 # TODO: move next two sections to a seperate file (with 1. load model 2. load images 3. store predictions), and keep in main
 

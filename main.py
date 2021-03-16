@@ -186,7 +186,9 @@ if __name__=='__main__':
         opt = SGD(lr=1e-2, momentum=0.9, decay=1e-4/args.max_epochs)
     else:
         opt = Adam(lr=args.learning_rate)
-    model.compile(optimizer=opt, loss='mse')
+    #model.compile(optimizer=opt, loss='mse')
+
+
     model.compile(optimizer=opt, loss='mse')
 
 
