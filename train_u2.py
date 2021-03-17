@@ -213,7 +213,7 @@ if __name__=='__main__':
     if args.model_name == 'u2net':
         model = u2net_2d((args.inL,args.inL,1),1,[64, 128, 256, 512])
     if args.model_name == 'unet_v1':
-        model = unet_v1(input_shape=(256,256,1), activation=None)
+        model = unet_v1()
 
     model.summary()  # display model summary
     model, epochNum, trainLoss, valLoss = initialize_model(model, '')
