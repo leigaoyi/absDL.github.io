@@ -1,0 +1,13 @@
+{
+  "model_name": "wgan",
+  "batch_size": 16,
+  "max_epochs": 2000,
+  "inL": 256,
+  "maskR": 95,
+  "centerVer": 330,
+  "centerHor": 340,
+  "learning_rate": 1e-5,
+  "SGD": false,
+  "skip_reference_comparison": false,
+  "img_size": 256
+}
